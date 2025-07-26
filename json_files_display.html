@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognition JSON文件动态展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: white;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .paper {
+            position: absolute;
+            background: white;
+            border: 2px solid #000;
+            border-radius: 2px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 300px;
+            max-height: 400px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-origin: center;
+            font-size: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .paper:hover {
+            transform: scale(1.05) rotate(0deg) !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000 !important;
+        }
+
+        .paper-header {
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .paper-content {
+            color: #666;
+            max-height: 300px;
+            overflow: hidden;
+        }
+
+
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 2000;
+            border: 1px solid #000;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+
+
+        .paper-animation {
+            animation: paperFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes paperFloat {
+            0%, 100% { 
+                transform: translateY(0px) translateX(0px) rotate(var(--rotation)); 
+            }
+            25% { 
+                transform: translateY(-15px) translateX(5px) rotate(calc(var(--rotation) + 2deg)); 
+            }
+            50% { 
+                transform: translateY(-10px) translateX(-3px) rotate(calc(var(--rotation) - 1deg)); 
+            }
+            75% { 
+                transform: translateY(-20px) translateX(8px) rotate(calc(var(--rotation) + 3deg)); 
+            }
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <!-- 纸张将在这里动态生成 -->
+    </div>
+
+
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>正在加载cognition目录中的JSON文件...</div>
+    </div>
+
+    <script>
+        let papers = [];
+        let jsonData = [];
+        let currentIndex = 0;
+        let displayInterval = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCognitionFiles();
+        });
+
+        async function loadCognitionFiles() {
+            showLoading(true);
+            
+            try {
+                // 获取cognition目录中的所有JSON文件
+                const response = await fetch('/cognition/');
+                const text = await response.text();
+                
+                // 解析HTML获取文件列表
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                const links = doc.querySelectorAll('a[href$=".json"]');
+                
+                const jsonFiles = Array.from(links).map(link => link.href.split('/').pop());
+                
+                console.log(`找到 ${jsonFiles.length} 个JSON文件`);
+                
+                // 加载每个JSON文件
+                for (let i = 0; i < jsonFiles.length; i++) {
+                    const filename = jsonFiles[i];
+                    try {
+                        const fileResponse = await fetch(`/cognition/${filename}`);
+                        const fileText = await fileResponse.text();
+                        const data = JSON.parse(fileText);
+                        
+                        jsonData.push({
+                            filename: filename,
+                            data: data,
+                            size: fileText.length
+                        });
+                        
+
+                        
+                    } catch (error) {
+                        console.error(`加载文件失败: ${filename}`, error);
+                    }
+                }
+                
+                showLoading(false);
+                
+                // 开始动态展示
+                startDynamicDisplay();
+                
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                showLoading(false);
+                alert('加载文件失败，请检查服务器是否正常运行');
+            }
+        }
+
+        function createPaper(data, index) {
+            const paper = document.createElement('div');
+            paper.className = 'paper';
+            
+            // 完全随机的位置和旋转
+            const x = Math.random() * (window.innerWidth - 350);
+            const y = Math.random() * (window.innerHeight - 450);
+            const rotation = (Math.random() - 0.5) * 360; // -180到180度，完全随机
+            const zIndex = 1000 + index; // 确保新纸张在最上层
+            
+            paper.style.left = x + 'px';
+            paper.style.top = y + 'px';
+            paper.style.transform = `rotate(${rotation}deg)`;
+            paper.style.zIndex = zIndex;
+            paper.style.setProperty('--rotation', rotation + 'deg');
+            
+            paper.classList.add('paper-animation');
+            paper.style.animationDelay = (index * 0.2) + 's';
+
+            // 内容
+            const content = JSON.stringify(data.data, null, 2);
+            const truncatedContent = content.length > 500 ? content.substring(0, 500) + '...' : content;
+            
+            paper.innerHTML = `
+                <div class="paper-header">${data.filename}</div>
+                <div class="paper-content">${truncatedContent.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}</div>
+            `;
+
+            // 点击事件
+            paper.addEventListener('click', function() {
+                showFullContent(data);
+            });
+
+            console.log(`创建纸张 ${index + 1}: ${data.filename} at (${x}, ${y})`);
+            return paper;
+        }
+
+        function startDynamicDisplay() {
+            if (jsonData.length === 0) {
+                console.log('没有数据可展示');
+                return;
+            }
+
+            currentIndex = 0;
+            addNextPaper();
+        }
+
+        function addNextPaper() {
+            if (currentIndex >= jsonData.length) {
+                console.log('所有纸张已添加完成');
+                return;
+            }
+
+            const data = jsonData[currentIndex];
+            const paper = createPaper(data, currentIndex);
+            
+            document.getElementById('container').appendChild(paper);
+            papers.push(paper);
+            
+            console.log(`添加纸张 ${currentIndex + 1}/${jsonData.length}: ${data.filename}`);
+            
+            currentIndex++;
+            
+            // 设置下一个纸张的添加时间 (200ms间隔，更快)
+            displayInterval = setTimeout(addNextPaper, 200);
+        }
+
+        function showFullContent(data) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: pointer;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                padding: 30px;
+                border-radius: 8px;
+                max-width: 80%;
+                max-height: 80%;
+                overflow: auto;
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                border: 2px solid #000;
+            `;
+            
+            content.innerHTML = `<h3>${data.filename}</h3>\n\n${JSON.stringify(data.data, null, 2)}`;
+            
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', function() {
+                document.body.removeChild(modal);
+            });
+        }
+
+
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        // 窗口大小改变时重新排列
+        window.addEventListener('resize', function() {
+            papers.forEach((paper, index) => {
+                const x = Math.random() * (window.innerWidth - 350);
+                const y = Math.random() * (window.innerHeight - 450);
+                const rotation = (Math.random() - 0.5) * 360;
+                const zIndex = 1000 + index; // 保持z-index顺序
+                
+                paper.style.transition = 'all 1.2s ease-in-out';
+                paper.style.left = x + 'px';
+                paper.style.top = y + 'px';
+                paper.style.transform = `rotate(${rotation}deg)`;
+                paper.style.zIndex = zIndex;
+                paper.style.setProperty('--rotation', rotation + 'deg');
+                
+                setTimeout(() => {
+                    paper.style.transition = '';
+                }, 1200);
+            });
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'r':
+                case 'R':
+                    // 重新排列所有纸张
+                    papers.forEach((paper, index) => {
+                        const x = Math.random() * (window.innerWidth - 350);
+                        const y = Math.random() * (window.innerHeight - 450);
+                        const rotation = (Math.random() - 0.5) * 360;
+                        const zIndex = 1000 + index; // 保持z-index顺序
+                        
+                        paper.style.transition = 'all 1.2s ease-in-out';
+                        paper.style.left = x + 'px';
+                        paper.style.top = y + 'px';
+                        paper.style.transform = `rotate(${rotation}deg)`;
+                        paper.style.zIndex = zIndex;
+                        paper.style.setProperty('--rotation', rotation + 'deg');
+                        
+                        setTimeout(() => {
+                            paper.style.transition = '';
+                        }, 1200);
+                    });
+                    break;
+                case 'a':
+                case 'A':
+                    // 切换动画
+                    papers.forEach(paper => {
+                        if (paper.classList.contains('paper-animation')) {
+                            paper.classList.remove('paper-animation');
+                        } else {
+                            paper.classList.add('paper-animation');
+                        }
+                    });
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 

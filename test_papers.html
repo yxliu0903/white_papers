@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试纸张显示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: white;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .paper {
+            position: absolute;
+            background: white;
+            border: 2px solid #000;
+            border-radius: 2px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 300px;
+            max-height: 400px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-origin: center;
+            font-size: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            opacity: 1;
+            z-index: 10;
+        }
+
+        .paper:hover {
+            transform: scale(1.05) rotate(0deg) !important;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000 !important;
+        }
+
+        .paper-header {
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .paper-content {
+            color: #666;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .test-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2000;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <!-- 纸张将在这里动态生成 -->
+    </div>
+
+    <button class="test-button" onclick="addTestPaper()">添加测试纸张</button>
+
+    <script>
+        let paperCount = 0;
+
+        function addTestPaper() {
+            const paper = document.createElement('div');
+            paper.className = 'paper';
+            
+            // 随机位置和旋转
+            const x = Math.random() * (window.innerWidth - 350);
+            const y = Math.random() * (window.innerHeight - 450);
+            const rotation = (Math.random() - 0.5) * 360;
+            const zIndex = Math.floor(Math.random() * 100) + 10;
+            
+            paper.style.left = x + 'px';
+            paper.style.top = y + 'px';
+            paper.style.transform = `rotate(${rotation}deg)`;
+            paper.style.zIndex = zIndex;
+            
+            paperCount++;
+            
+            paper.innerHTML = `
+                <div class="paper-header">测试纸张 ${paperCount}</div>
+                <div class="paper-content">
+                    这是一个测试纸张，用于验证显示功能是否正常。
+                    <br><br>
+                    位置: (${Math.round(x)}, ${Math.round(y)})
+                    <br>
+                    旋转: ${Math.round(rotation)}°
+                    <br>
+                    Z-index: ${zIndex}
+                </div>
+            `;
+
+            document.getElementById('container').appendChild(paper);
+            console.log(`添加测试纸张 ${paperCount} at (${x}, ${y})`);
+        }
+
+        // 页面加载时添加几个测试纸张
+        document.addEventListener('DOMContentLoaded', function() {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => addTestPaper(), i * 500);
+            }
+        });
+    </script>
+</body>
+</html> 
