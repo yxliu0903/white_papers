@@ -148,16 +148,107 @@
             showLoading(true);
             
             try {
-                // 获取cognition目录中的所有JSON文件
-                const response = await fetch('/cognition/');
-                const text = await response.text();
-                
-                // 解析HTML获取文件列表
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const links = doc.querySelectorAll('a[href$=".json"]');
-                
-                const jsonFiles = Array.from(links).map(link => link.href.split('/').pop());
+                // 硬编码JSON文件列表，适用于GitHub Pages
+                const jsonFiles = [
+                    "www.databricks.com_blog_introducing-dbrx-new-state-art-open-llm.json",
+                    "www.arxiv.org_pdf_2506.06708.json",
+                    "sustcsonglin.github.io_blog_2024_deltanet-2_.json",
+                    "arxiv.org_pdf_2506.05233.json",
+                    "arxiv.org_pdf_2506.04761.json",
+                    "arxiv.org_pdf_2506.02475.json",
+                    "arxiv.org_pdf_2505.23884_.json",
+                    "arxiv.org_pdf_2505.23735.json",
+                    "arxiv.org_pdf_2505.19488.json",
+                    "arxiv.org_pdf_2505.16381.json",
+                    "arxiv.org_pdf_2504.20966.json",
+                    "arxiv.org_pdf_2504.06949.json",
+                    "arxiv.org_pdf_2503.02130.json",
+                    "arxiv.org_pdf_2502.11089.json",
+                    "arxiv.org_pdf_2502.01578.json",
+                    "arxiv.org_pdf_2501.00663.json",
+                    "arxiv.org_pdf_2411.12537.json",
+                    "arxiv.org_pdf_2410.24159.json",
+                    "arxiv.org_pdf_2410.20011.json",
+                    "arxiv.org_pdf_2410.06577.json",
+                    "arxiv.org_pdf_2410.01651.json",
+                    "arxiv.org_pdf_2408.09380.json",
+                    "arxiv.org_pdf_2407.04620.json",
+                    "arxiv.org_pdf_2402.06196.json",
+                    "arxiv.org_pdf_2311.12351.json",
+                    "arxiv.org_pdf_2310.12321.json",
+                    "arxiv.org_pdf_2305.13245.json",
+                    "arxiv.org_pdf_2305.13048.json",
+                    "arxiv.org_pdf_2303.18223.json",
+                    "arxiv.org_pdf_2203.14263.json",
+                    "arxiv.org_pdf_2106.07139.json",
+                    "arxiv.org_pdf_2009.06732.json",
+                    "arxiv.org_pdf_2001.04451.json",
+                    "arxiv.org_pdf_1910.03771v4.json",
+                    "arxiv.org_pdf_1812.01243.json",
+                    "arxiv.org_abs_2505.06708.json",
+                    "arxiv.org_abs_2502.10297v1.json",
+                    "arxiv.org_abs_2501.08313.json",
+                    "arxiv.org_abs_2412.06464.json",
+                    "arxiv.org_abs_2410.10254.json",
+                    "arxiv.org_abs_2409.07146.json",
+                    "arxiv.org_abs_2407.06324.json",
+                    "arxiv.org_abs_2406.07887.json",
+                    "arxiv.org_abs_2406.06484.json",
+                    "arxiv.org_abs_2405.21060.json",
+                    "arxiv.org_abs_2405.18679v2.json",
+                    "arxiv.org_abs_2405.16712.json",
+                    "arxiv.org_abs_2405.04517.json",
+                    "arxiv.org_abs_2404.07904.json",
+                    "arxiv.org_abs_2404.05892.json",
+                    "arxiv.org_abs_2403.19887.json",
+                    "arxiv.org_abs_2403.03507.json",
+                    "arxiv.org_abs_2402.19427.json",
+                    "arxiv.org_abs_2402.18668.json",
+                    "arxiv.org_abs_2402.10644.json",
+                    "arxiv.org_abs_2402.04347.json",
+                    "arxiv.org_abs_2401.04658.json",
+                    "arxiv.org_abs_2401.04081.json",
+                    "arxiv.org_abs_2312.06635.json",
+                    "arxiv.org_abs_2312.04927.json",
+                    "arxiv.org_abs_2312.00752.json",
+                    "arxiv.org_abs_2311.09431.json",
+                    "arxiv.org_abs_2311.05908.json",
+                    "arxiv.org_abs_2311.04823.json",
+                    "arxiv.org_abs_2311.01927.json",
+                    "arxiv.org_abs_2310.16450.json",
+                    "arxiv.org_abs_2310.12109.json",
+                    "arxiv.org_abs_2310.01889.json",
+                    "arxiv.org_abs_2309.17453.json",
+                    "arxiv.org_abs_2309.12307.json",
+                    "arxiv.org_abs_2307.14995.json",
+                    "arxiv.org_abs_2307.08691.json",
+                    "arxiv.org_abs_2307.08621.json",
+                    "arxiv.org_abs_2306.14048.json",
+                    "arxiv.org_abs_2306.09539.json",
+                    "arxiv.org_abs_2305.14314.json",
+                    "arxiv.org_abs_2305.13048.json",
+                    "arxiv.org_abs_2305.04749.json",
+                    "arxiv.org_abs_2303.06349.json",
+                    "arxiv.org_abs_2302.10866.json",
+                    "arxiv.org_abs_2212.14052.json",
+                    "arxiv.org_abs_2211.17192.json",
+                    "arxiv.org_abs_2209.10655.json",
+                    "arxiv.org_abs_2208.04933.json",
+                    "arxiv.org_abs_2205.14135.json",
+                    "arxiv.org_abs_2204.04667.json",
+                    "arxiv.org_abs_2202.08791.json",
+                    "arxiv.org_abs_2111.00396.json",
+                    "arxiv.org_abs_2105.14103.json",
+                    "arxiv.org_abs_2105.03824.json",
+                    "arxiv.org_abs_2103.02143.json",
+                    "arxiv.org_abs_2102.11174.json",
+                    "arxiv.org_abs_2102.03902.json",
+                    "arxiv.org_abs_2009.14794.json",
+                    "arxiv.org_abs_2006.16236.json",
+                    "arxiv.org_abs_2006.04768.json",
+                    "arxiv.org_abs_1911.02150.json",
+                    "arxiv.org_abs_1706.03762.json"
+                ];
                 
                 console.log(`找到 ${jsonFiles.length} 个JSON文件`);
                 
@@ -165,7 +256,11 @@
                 for (let i = 0; i < jsonFiles.length; i++) {
                     const filename = jsonFiles[i];
                     try {
-                        const fileResponse = await fetch(`/cognition/${filename}`);
+                        const fileResponse = await fetch(`cognition/${filename}`);
+                        if (!fileResponse.ok) {
+                            console.warn(`文件不存在: ${filename}`);
+                            continue;
+                        }
                         const fileText = await fileResponse.text();
                         const data = JSON.parse(fileText);
                         
@@ -175,8 +270,6 @@
                             size: fileText.length
                         });
                         
-
-                        
                     } catch (error) {
                         console.error(`加载文件失败: ${filename}`, error);
                     }
@@ -184,13 +277,18 @@
                 
                 showLoading(false);
                 
+                if (jsonData.length === 0) {
+                    alert('没有找到可用的JSON文件，请确保cognition目录中有JSON文件');
+                    return;
+                }
+                
                 // 开始动态展示
                 startDynamicDisplay();
                 
             } catch (error) {
-                console.error('加载文件列表失败:', error);
+                console.error('加载文件失败:', error);
                 showLoading(false);
-                alert('加载文件失败，请检查服务器是否正常运行');
+                alert('加载文件失败，请检查网络连接和文件路径');
             }
         }
 
